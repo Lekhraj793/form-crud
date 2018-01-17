@@ -1,0 +1,13 @@
+/*form css*/
+
+.form-group{
+font-size: 20px;
+}
+.form-group label{
+    float: left;
+}
+.form-control{
+    width: 350px;
+    float: right;
+    margin-left: 20px;
+}
