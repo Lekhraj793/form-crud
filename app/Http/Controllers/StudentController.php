@@ -2,78 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Libraries\FileStorage;
-use App\student;
-use App\studentdetail;
+use App\Repositories\StudentDetailInterface;
+use App\Repositories\StudentDetailRepository;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
+    protected $student;
+
+    public function __construct(StudentDetailRepository $student)
+    {
+        $this->studentdetail=$student;
+    }
+
     public function index()
     {
+
         return view('/form/insert');
     }
 
     public function store(Request $request)
     {
-        //dd(request()->all());
-        $students= studentdetail::create(request()->all());
-        FileStorage::uploadImage($students, $request);
-        return redirect('/');
+        $student=$this->studentdetail->add($request);
+        if (!$student) {
+            return redirect('/');
+        }
+        else {
+            throw new Exception("data not inserted");
+        }
     }
 
     public function show()
     {
-        $students=studentdetail::orderBy('fname','asc')->get();//replace get() with all()
+        $students=$this->studentdetail->all();
         return view('/users',compact('students'));
     }
 
-    public function edit($id)
+    public function edit(Request $request)
     {
-        $student=studentdetail::find($id);
+        $student=$this->studentdetail->find($request);
         return view('/form/edit',compact('student'));
     }
 
     public function update(Request $request)
     {
-        //dd(request()->all());
-        $student=studentdetail::findorfail($request->id);
-        $input=$request->all();
-        FileStorage::uploadImage($student, $request);
-        $student->fill($input)->save();
-
+        $student=$this->studentdetail->update($request);
         return redirect('/');
     }
 
     public function destroy(Request $request)
     {
-        studentdetail::destroy($request->id);
-        return redirect('/');
-    }
+        $student=$this->studentdetail->remove($request);
+        if($student)
+        {
+            return redirect('/');
+        }
+        else
+        {
+            throw new \Exception("data not remove");
 
-    public function auto()
-    {
-        return view('/search.auto');
-    }
-
-    public function autocomplete(Request $request)
-    {
-        $input=$_POST['auto'];
-        $auto=studentdetail::where('mobile',"LIKE",$input)->get();
-        return response()->json($auto);
+        }
     }
 
     public function search(Request $request)
     {
-        $search=$_POST['search'];
-        $student=studentdetail::where('email',"=",$search)->first();
+        $student=$this->studentdetail->search($request);
         if (count($student)>0)
         {
-            return view('/form/edit', compact('student'));
+            throw new \Exception('content not found');
         }
         else
         {
-            throw new \Exception('content not found');
+          return view('/form/edit', compact('student'));
+
         }
     }
 
